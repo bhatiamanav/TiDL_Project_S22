@@ -182,10 +182,10 @@ class Engine(object):
             cudnn.benchmark = True
 
 
-            model = torch.nn.DataParallel(model, device_ids=self.state['device_ids']).cuda()
+            model = torch.nn.DataParallel(model, device_ids=self.state['device_ids']).to("cuda:0" if self.state['use_gpu'] else "cpu")
 
 
-            criterion = criterion.cuda()
+            criterion = criterion.to("cuda:0" if self.state['use_gpu'] else "cpu")
 
         if self.state['evaluate']:
             self.validate(val_loader, model, criterion)
@@ -239,7 +239,7 @@ class Engine(object):
             self.on_start_batch(True, model, criterion, data_loader, optimizer)
 
             if self.state['use_gpu']:
-                self.state['target'] = self.state['target'].cuda(async=True)
+                self.state['target'] = self.state['target'].to(device)
 
             self.on_forward(True, model, criterion, data_loader, optimizer)
 
@@ -275,7 +275,7 @@ class Engine(object):
             self.on_start_batch(False, model, criterion, data_loader)
 
             if self.state['use_gpu']:
-                self.state['target'] = self.state['target'].cuda(async=True)
+                self.state['target'] = self.state['target'].to("cuda:0" if self.state['use_gpu'] else "cpu")
 
             self.on_forward(False, model, criterion, data_loader)
 

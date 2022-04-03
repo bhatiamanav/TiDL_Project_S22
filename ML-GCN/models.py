@@ -3,6 +3,7 @@ from torch.nn import Parameter
 from util import *
 import torch
 import torch.nn as nn
+from torch_geometric.nn.conv import gin_conv
 
 class GraphConvolution(nn.Module):
     """
@@ -56,12 +57,16 @@ class GCNResnet(nn.Module):
         self.num_classes = num_classes
         self.pooling = nn.MaxPool2d(14, 14)
 
-        self.gc1 = GraphConvolution(in_channel, 1024)
-        self.gc2 = GraphConvolution(1024, 2048)
-        self.relu = nn.LeakyReLU(0.2)
+        # self.gc1 = GraphConvolution(in_channel, 1024)
+        # self.gc2 = GraphConvolution(1024, 2048)
+        self.gc1  = gin_conv.GINConv( nn= nn.Linear(in_channel , 1024) , eps=1e-4)
+        self.gc2 =  gin_conv.GINConv( nn= nn.Linear(1024, 2048) , eps=1e-4)
+        self.relu = nn.GELU() #nn.LeakyReLU(0.2)
 
         _adj = gen_A(num_classes, t, adj_file)
+        print("THis is _adj " , _adj , sep="\n")
         self.A = Parameter(torch.from_numpy(_adj).float())
+        print("THis is A " , self.A , sep="\n")
         # image normalization
         self.image_normalization_mean = [0.485, 0.456, 0.406]
         self.image_normalization_std = [0.229, 0.224, 0.225]
@@ -74,6 +79,7 @@ class GCNResnet(nn.Module):
 
         inp = inp[0]
         adj = gen_adj(self.A).detach()
+
         x = self.gc1(inp, adj)
         x = self.relu(x)
         x = self.gc2(x, adj)
