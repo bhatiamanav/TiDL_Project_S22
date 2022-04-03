@@ -37,6 +37,8 @@ def download_coco2014(root, phase):
         print('[dataset] Extracting tar file {file} to {path}'.format(file=cached_file, path=data))
         command = 'unzip {} -d {}'.format(cached_file,data)
         os.system(command)
+        os.system(f"rm {cached_file}")
+        os.system(f"touch {cached_file}")
     print('[dataset] Done!')
 
     # train/val images/annotations
@@ -51,6 +53,8 @@ def download_coco2014(root, phase):
         print('[dataset] Extracting tar file {file} to {path}'.format(file=cached_file, path=data))
         command = 'unzip {} -d {}'.format(cached_file, data)
         os.system(command)
+        os.system(f"rm {cached_file}")
+        os.system(f"touch {cached_file}")
     print('[annotation] Done!')
 
     anno = os.path.join(data, '{}_anno.json'.format(phase))
