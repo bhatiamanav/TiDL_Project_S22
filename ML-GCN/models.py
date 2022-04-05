@@ -1,9 +1,20 @@
+from numpy import dtype
 import torchvision.models as models
 from torch.nn import Parameter
 from util import *
 import torch
 import torch.nn as nn
 from torch_geometric.nn.conv import gin_conv
+
+def adj_edgelist(adj ):
+    edgelist= []
+    n = len(adj)
+    m= len(adj[0])
+    for i in range(n):
+        for j in range (i+1 , m ):
+            if adj[i , j ] > 0:
+                edgelist.append( [i , j ])
+    return torch.Tensor(edgelist , dtype=torch.long).T
 
 class GraphConvolution(nn.Module):
     """
@@ -62,11 +73,10 @@ class GCNResnet(nn.Module):
         self.gc1  = gin_conv.GINConv( nn= nn.Linear(in_channel , 1024) , eps=1e-4)
         self.gc2 =  gin_conv.GINConv( nn= nn.Linear(1024, 2048) , eps=1e-4)
         self.relu = nn.GELU() #nn.LeakyReLU(0.2)
-
+        
         _adj = gen_A(num_classes, t, adj_file)
-        print("THis is _adj " , _adj , sep="\n")
-        self.A = Parameter(torch.from_numpy(_adj).float())
-        print("THis is A " , self.A , sep="\n")
+        self.edgelist = adj_edgelist(_adj)
+        
         # image normalization
         self.image_normalization_mean = [0.485, 0.456, 0.406]
         self.image_normalization_std = [0.229, 0.224, 0.225]
@@ -78,11 +88,11 @@ class GCNResnet(nn.Module):
 
 
         inp = inp[0]
-        adj = gen_adj(self.A).detach()
+        
 
-        x = self.gc1(inp, adj)
+        x = self.gc1(inp, self.edgelist)
         x = self.relu(x)
-        x = self.gc2(x, adj)
+        x = self.gc2(x, self.edgelist)
 
         x = x.transpose(0, 1)
         x = torch.matmul(feature, x)
