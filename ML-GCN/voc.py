@@ -140,6 +140,7 @@ def download_voc2007(root):
         os.chdir(root)
         tar.extractall()
         tar.close()
+        os.system("rm " + cached_file)
         os.chdir(cwd)
         print('[dataset] Done!')
 
@@ -185,6 +186,7 @@ def download_voc2007(root):
         os.chdir(root)
         tar.extractall()
         tar.close()
+        os.system("rm " + cached_file)
         os.chdir(cwd)
         print('[dataset] Done!')
 
@@ -208,6 +210,7 @@ def download_voc2007(root):
         os.chdir(root)
         tar.extractall()
         tar.close()
+        os.system("rm " + cached_file)
         os.chdir(cwd)
         print('[dataset] Done!')
 

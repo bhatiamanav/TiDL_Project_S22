@@ -41,13 +41,13 @@ def main_voc2007():
     use_gpu = torch.cuda.is_available()
 
     # define dataset
-    train_dataset = Voc2007Classification(args.data, 'trainval', inp_name='data/voc/voc_glove_word2vec.pkl')
-    val_dataset = Voc2007Classification(args.data, 'test', inp_name='data/voc/voc_glove_word2vec.pkl')
+    train_dataset = Voc2007Classification(args.data, 'trainval', inp_name='/content/TiDL_Project_S22/ML-GCN/data/voc/voc_glove_word2vec.pkl')
+    val_dataset = Voc2007Classification(args.data, 'test', inp_name='/content/TiDL_Project_S22/ML-GCN/data/voc/voc_glove_word2vec.pkl')
 
     num_classes = 20
 
     # load model
-    model = gcn_resnet101(num_classes=num_classes, t=0.4, adj_file='data/voc/voc_adj.pkl')
+    model = gcn_resnet101(num_classes=num_classes, t=0.4, adj_file='/content/TiDL_Project_S22/ML-GCN/data/voc/voc_adj.pkl')
 
     # define loss function (criterion)
     criterion = nn.MultiLabelSoftMarginLoss()
