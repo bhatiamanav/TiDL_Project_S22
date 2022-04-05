@@ -14,7 +14,7 @@ def adj_edgelist(adj ):
         for j in range (i+1 , m ):
             if adj[i , j ] > 0:
                 edgelist.append( [i , j ])
-    return torch.Tensor(edgelist , dtype=torch.long).T
+    return torch.tensor(edgelist , dtype=torch.long).T.cuda()
 
 class GraphConvolution(nn.Module):
     """
