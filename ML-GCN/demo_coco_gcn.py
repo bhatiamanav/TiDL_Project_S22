@@ -44,11 +44,14 @@ def main_coco():
 
     use_gpu = torch.cuda.is_available()
 
-    train_dataset = COCO2014(args.data, phase='train', inp_name='/content/TiDL_Project_S22/ML-GCN/data/coco/coco_glove_word2vec.pkl')
-    val_dataset = COCO2014(args.data, phase='val', inp_name='/content/TiDL_Project_S22/ML-GCN/data/coco/coco_glove_word2vec.pkl')
+    train_dataset = COCO2014(args.data, phase='train',
+                             inp_name='./data/coco/coco_glove_word2vec.pkl')
+    val_dataset = COCO2014(args.data, phase='val',
+                           inp_name='./data/coco/coco_glove_word2vec.pkl')
     num_classes = 80
 
-    model = gcn_resnet101(num_classes=num_classes, t=0.4, adj_file='/content/TiDL_Project_S22/ML-GCN/data/coco/coco_adj.pkl')
+    model = gcn_resnet101(num_classes=num_classes, t=0.4,
+                          adj_file='./data/coco/coco_adj.pkl')
 
     # define loss function (criterion)
     criterion = nn.MultiLabelSoftMarginLoss()
@@ -61,9 +64,9 @@ def main_coco():
                                 weight_decay=args.weight_decay)
 
     state = {'batch_size': args.batch_size, 'image_size': args.image_size, 'max_epochs': args.epochs,
-             'evaluate': args.evaluate, 'resume': args.resume, 'num_classes':num_classes}
+             'evaluate': args.evaluate, 'resume': args.resume, 'num_classes': num_classes}
     state['difficult_examples'] = True
-    state['save_model_path'] = '/content/drive/MyDrive/TiDL/coco'
+    state['save_model_path'] = './checkpoint/coco'
     state['workers'] = args.workers
     state['epoch_step'] = args.epoch_step
     state['lr'] = args.lr
@@ -72,6 +75,7 @@ def main_coco():
         state['evaluate'] = True
     engine = GCNMultiLabelMAPEngine(state)
     engine.learning(model, criterion, train_dataset, val_dataset, optimizer)
+
 
 if __name__ == '__main__':
     main_coco()
