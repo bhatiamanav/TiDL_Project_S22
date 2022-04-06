@@ -8,7 +8,7 @@ parser.add_argument('data', metavar='DIR',
                     help='path to dataset (e.g. data/')
 parser.add_argument('--image-size', '-i', default=224, type=int,
                     metavar='N', help='image size (default: 224)')
-parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=20, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -60,7 +60,7 @@ def main_voc2007():
     state = {'batch_size': args.batch_size, 'image_size': args.image_size, 'max_epochs': args.epochs,
              'evaluate': args.evaluate, 'resume': args.resume, 'num_classes':num_classes}
     state['difficult_examples'] = True
-    state['save_model_path'] = 'checkpoint/voc2007/'
+    state['save_model_path'] = '/content/drive/MyDrive/TiDL/voc'
     state['workers'] = args.workers
     state['epoch_step'] = args.epoch_step
     state['lr'] = args.lr
