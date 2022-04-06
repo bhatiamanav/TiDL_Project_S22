@@ -1,6 +1,8 @@
 import os
 import shutil
 import time
+
+from sympy import true
 import torch.backends.cudnn as cudnn
 import torch.nn.parallel
 import torch.optim
@@ -11,6 +13,8 @@ import torch.nn as nn
 from util import *
 
 tqdm.monitor_interval = 0
+
+
 class Engine(object):
     def __init__(self, state={}):
         self.state = state
@@ -89,18 +93,19 @@ class Engine(object):
                       'Time {batch_time_current:.3f} ({batch_time:.3f})\t'
                       'Data {data_time_current:.3f} ({data_time:.3f})\t'
                       'Loss {loss_current:.4f} ({loss:.4f})'.format(
-                    self.state['epoch'], self.state['iteration'], len(data_loader),
-                    batch_time_current=self.state['batch_time_current'],
-                    batch_time=batch_time, data_time_current=self.state['data_time_batch'],
-                    data_time=data_time, loss_current=self.state['loss_batch'], loss=loss))
+                          self.state['epoch'], self.state['iteration'], len(
+                              data_loader),
+                          batch_time_current=self.state['batch_time_current'],
+                          batch_time=batch_time, data_time_current=self.state['data_time_batch'],
+                          data_time=data_time, loss_current=self.state['loss_batch'], loss=loss))
             else:
                 print('Test: [{0}/{1}]\t'
                       'Time {batch_time_current:.3f} ({batch_time:.3f})\t'
                       'Data {data_time_current:.3f} ({data_time:.3f})\t'
                       'Loss {loss_current:.4f} ({loss:.4f})'.format(
-                    self.state['iteration'], len(data_loader), batch_time_current=self.state['batch_time_current'],
-                    batch_time=batch_time, data_time_current=self.state['data_time_batch'],
-                    data_time=data_time, loss_current=self.state['loss_batch'], loss=loss))
+                          self.state['iteration'], len(data_loader), batch_time_current=self.state['batch_time_current'],
+                          batch_time=batch_time, data_time_current=self.state['data_time_batch'],
+                          data_time=data_time, loss_current=self.state['loss_batch'], loss=loss))
 
     def on_forward(self, training, model, criterion, data_loader, optimizer=None, display=True):
 
@@ -126,7 +131,8 @@ class Engine(object):
             normalize = transforms.Normalize(mean=model.image_normalization_mean,
                                              std=model.image_normalization_std)
             self.state['train_transform'] = transforms.Compose([
-                MultiScaleCrop(self.state['image_size'], scales=(1.0, 0.875, 0.75, 0.66, 0.5), max_distort=2),
+                MultiScaleCrop(self.state['image_size'], scales=(
+                    1.0, 0.875, 0.75, 0.66, 0.5), max_distort=2),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 normalize,
@@ -165,7 +171,8 @@ class Engine(object):
         # optionally resume from a checkpoint
         if self._state('resume') is not None:
             if os.path.isfile(self.state['resume']):
-                print("=> loading checkpoint '{}'".format(self.state['resume']))
+                print("=> loading checkpoint '{}'".format(
+                    self.state['resume']))
                 checkpoint = torch.load(self.state['resume'])
                 self.state['start_epoch'] = checkpoint['epoch']
                 self.state['best_score'] = checkpoint['best_score']
@@ -173,19 +180,19 @@ class Engine(object):
                 print("=> loaded checkpoint '{}' (epoch {})"
                       .format(self.state['evaluate'], checkpoint['epoch']))
             else:
-                print("=> no checkpoint found at '{}'".format(self.state['resume']))
-
+                print("=> no checkpoint found at '{}'".format(
+                    self.state['resume']))
 
         if self.state['use_gpu']:
             train_loader.pin_memory = True
             val_loader.pin_memory = True
             cudnn.benchmark = True
 
+            model = torch.nn.DataParallel(model, device_ids=self.state['device_ids']).to(
+                "cuda" if self.state['use_gpu'] else "cpu", non_blocking=True)
 
-            model = torch.nn.DataParallel(model, device_ids=self.state['device_ids']).to("cuda:0" if self.state['use_gpu'] else "cpu")
-
-
-            criterion = criterion.to("cuda:0" if self.state['use_gpu'] else "cpu")
+            criterion = criterion.to(
+                "cuda" if self.state['use_gpu'] else "cpu", non_blocking=True)
 
         if self.state['evaluate']:
             self.validate(val_loader, model, criterion)
@@ -196,7 +203,7 @@ class Engine(object):
         for epoch in range(self.state['start_epoch'], self.state['max_epochs']):
             self.state['epoch'] = epoch
             lr = self.adjust_learning_rate(optimizer)
-            print('lr:',lr)
+            print('lr:', lr)
 
             # train for one epoch
             self.train(train_loader, model, criterion, optimizer, epoch)
@@ -239,7 +246,8 @@ class Engine(object):
             self.on_start_batch(True, model, criterion, data_loader, optimizer)
 
             if self.state['use_gpu']:
-                self.state['target'] = self.state['target'].to("cuda:0" if self.state['use_gpu'] else "cpu")
+                self.state['target'] = self.state['target'].to(
+                    "cuda" if self.state['use_gpu'] else "cpu", non_blocking=True)
 
             self.on_forward(True, model, criterion, data_loader, optimizer)
 
@@ -275,7 +283,8 @@ class Engine(object):
             self.on_start_batch(False, model, criterion, data_loader)
 
             if self.state['use_gpu']:
-                self.state['target'] = self.state['target'].to("cuda:0" if self.state['use_gpu'] else "cpu")
+                self.state['target'] = self.state['target'].to(
+                    "cuda" if self.state['use_gpu'] else "cpu", non_blocking=True)
 
             self.on_forward(False, model, criterion, data_loader)
 
@@ -301,19 +310,22 @@ class Engine(object):
         if is_best:
             filename_best = 'model_best.pth.tar'
             if self._state('save_model_path') is not None:
-                filename_best = os.path.join(self.state['save_model_path'], filename_best)
+                filename_best = os.path.join(
+                    self.state['save_model_path'], filename_best)
             shutil.copyfile(filename, filename_best)
             if self._state('save_model_path') is not None:
                 if self._state('filename_previous_best') is not None:
                     os.remove(self._state('filename_previous_best'))
-                filename_best = os.path.join(self.state['save_model_path'], 'model_best_{score:.4f}.pth.tar'.format(score=state['best_score']))
+                filename_best = os.path.join(
+                    self.state['save_model_path'], 'model_best_{score:.4f}.pth.tar'.format(score=state['best_score']))
                 shutil.copyfile(filename, filename_best)
                 self.state['filename_previous_best'] = filename_best
 
     def adjust_learning_rate(self, optimizer):
         """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
         lr_list = []
-        decay = 0.1 if sum(self.state['epoch'] == np.array(self.state['epoch_step'])) > 0 else 1.0
+        decay = 0.1 if sum(self.state['epoch'] == np.array(
+            self.state['epoch_step'])) > 0 else 1.0
         for param_group in optimizer.param_groups:
             param_group['lr'] = param_group['lr'] * decay
             lr_list.append(param_group['lr'])
@@ -325,17 +337,20 @@ class MultiLabelMAPEngine(Engine):
         Engine.__init__(self, state)
         if self._state('difficult_examples') is None:
             self.state['difficult_examples'] = False
-        self.state['ap_meter'] = AveragePrecisionMeter(self.state['difficult_examples'])
+        self.state['ap_meter'] = AveragePrecisionMeter(
+            self.state['difficult_examples'])
 
     def on_start_epoch(self, training, model, criterion, data_loader, optimizer=None, display=True):
-        Engine.on_start_epoch(self, training, model, criterion, data_loader, optimizer)
+        Engine.on_start_epoch(self, training, model,
+                              criterion, data_loader, optimizer)
         self.state['ap_meter'].reset()
 
     def on_end_epoch(self, training, model, criterion, data_loader, optimizer=None, display=True):
         map = 100 * self.state['ap_meter'].value().mean()
         loss = self.state['meter_loss'].value()[0]
         OP, OR, OF1, CP, CR, CF1 = self.state['ap_meter'].overall()
-        OP_k, OR_k, OF1_k, CP_k, CR_k, CF1_k = self.state['ap_meter'].overall_topk(3)
+        OP_k, OR_k, OF1_k, CP_k, CR_k, CF1_k = self.state['ap_meter'].overall_topk(
+            3)
         if display:
             if training:
                 print('Epoch: [{0}]\t'
@@ -348,7 +363,8 @@ class MultiLabelMAPEngine(Engine):
                       'CR: {CR:.4f}\t'
                       'CF1: {CF1:.4f}'.format(OP=OP, OR=OR, OF1=OF1, CP=CP, CR=CR, CF1=CF1))
             else:
-                print('Test: \t Loss {loss:.4f}\t mAP {map:.3f}'.format(loss=loss, map=map))
+                print('Test: \t Loss {loss:.4f}\t mAP {map:.3f}'.format(
+                    loss=loss, map=map))
                 print('OP: {OP:.4f}\t'
                       'OR: {OR:.4f}\t'
                       'OF1: {OF1:.4f}\t'
@@ -376,10 +392,12 @@ class MultiLabelMAPEngine(Engine):
 
     def on_end_batch(self, training, model, criterion, data_loader, optimizer=None, display=True):
 
-        Engine.on_end_batch(self, training, model, criterion, data_loader, optimizer, display=False)
+        Engine.on_end_batch(self, training, model, criterion,
+                            data_loader, optimizer, display=False)
 
         # measure mAP
-        self.state['ap_meter'].add(self.state['output'].data, self.state['target_gt'])
+        self.state['ap_meter'].add(
+            self.state['output'].data, self.state['target_gt'])
 
         if display and self.state['print_freq'] != 0 and self.state['iteration'] % self.state['print_freq'] == 0:
             loss = self.state['meter_loss'].value()[0]
@@ -390,25 +408,27 @@ class MultiLabelMAPEngine(Engine):
                       'Time {batch_time_current:.3f} ({batch_time:.3f})\t'
                       'Data {data_time_current:.3f} ({data_time:.3f})\t'
                       'Loss {loss_current:.4f} ({loss:.4f})'.format(
-                    self.state['epoch'], self.state['iteration'], len(data_loader),
-                    batch_time_current=self.state['batch_time_current'],
-                    batch_time=batch_time, data_time_current=self.state['data_time_batch'],
-                    data_time=data_time, loss_current=self.state['loss_batch'], loss=loss))
+                          self.state['epoch'], self.state['iteration'], len(
+                              data_loader),
+                          batch_time_current=self.state['batch_time_current'],
+                          batch_time=batch_time, data_time_current=self.state['data_time_batch'],
+                          data_time=data_time, loss_current=self.state['loss_batch'], loss=loss))
             else:
                 print('Test: [{0}/{1}]\t'
                       'Time {batch_time_current:.3f} ({batch_time:.3f})\t'
                       'Data {data_time_current:.3f} ({data_time:.3f})\t'
                       'Loss {loss_current:.4f} ({loss:.4f})'.format(
-                    self.state['iteration'], len(data_loader), batch_time_current=self.state['batch_time_current'],
-                    batch_time=batch_time, data_time_current=self.state['data_time_batch'],
-                    data_time=data_time, loss_current=self.state['loss_batch'], loss=loss))
+                          self.state['iteration'], len(data_loader), batch_time_current=self.state['batch_time_current'],
+                          batch_time=batch_time, data_time_current=self.state['data_time_batch'],
+                          data_time=data_time, loss_current=self.state['loss_batch'], loss=loss))
 
 
 class GCNMultiLabelMAPEngine(MultiLabelMAPEngine):
     def on_forward(self, training, model, criterion, data_loader, optimizer=None, display=True):
         feature_var = torch.autograd.Variable(self.state['feature']).float()
         target_var = torch.autograd.Variable(self.state['target']).float()
-        inp_var = torch.autograd.Variable(self.state['input']).float().detach()  # one hot
+        inp_var = torch.autograd.Variable(
+            self.state['input']).float().detach()  # one hot
         if not training:
             feature_var.volatile = True
             target_var.volatile = True
@@ -424,7 +444,6 @@ class GCNMultiLabelMAPEngine(MultiLabelMAPEngine):
             nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)
             optimizer.step()
 
-
     def on_start_batch(self, training, model, criterion, data_loader, optimizer=None, display=True):
 
         self.state['target_gt'] = self.state['target'].clone()
@@ -435,4 +454,3 @@ class GCNMultiLabelMAPEngine(MultiLabelMAPEngine):
         self.state['feature'] = input[0]
         self.state['out'] = input[1]
         self.state['input'] = input[2]
-
