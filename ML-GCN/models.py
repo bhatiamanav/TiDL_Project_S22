@@ -89,7 +89,7 @@ class GCNResnet(nn.Module):
 
         inp = inp[0]
         
-
+        # add skip connection 
         x = self.gc1(inp, self.edgelist)
         x = self.relu(x)
         x = self.gc2(x, self.edgelist)
