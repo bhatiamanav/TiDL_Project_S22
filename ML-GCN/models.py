@@ -6,15 +6,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn.conv import gin_conv
 
-def adj_edgelist(adj ):
-    edgelist= []
-    n = len(adj)
-    m= len(adj[0])
-    for i in range(n):
-        for j in range (i+1 , m ):
-            if adj[i , j ] > 0:
-                edgelist.append( [i , j ])
-    return torch.tensor(edgelist , dtype=torch.long).T.cuda()
+
 
 class GraphConvolution(nn.Module):
     """
@@ -75,12 +67,21 @@ class GCNResnet(nn.Module):
         self.relu = nn.GELU() #nn.LeakyReLU(0.2)
         
         _adj = gen_A(num_classes, t, adj_file)
-        self.edgelist = adj_edgelist(_adj)
+        self.edgelist = self.adj_edgelist(_adj)
         
         # image normalization
         self.image_normalization_mean = [0.485, 0.456, 0.406]
         self.image_normalization_std = [0.229, 0.224, 0.225]
-
+    def adj_edgelist(self , adj ):
+        edgelist= []
+        n = len(adj)
+        m= len(adj[0])
+        for i in range(n):
+            for j in range (i+1 , m ):
+                if adj[i , j ] > 0:
+                    edgelist.append( [i , j ])
+        return torch.tensor(edgelist , dtype=torch.long).T
+        
     def forward(self, feature, inp):
         feature = self.features(feature)
         feature = self.pooling(feature)

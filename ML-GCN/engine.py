@@ -43,7 +43,7 @@ class Engine(object):
 
         if self._state('epoch_step') is None:
             self.state['epoch_step'] = []
-
+        self.device = torch.device("cuda" if self.state['use_gpu'] else "cpu")
         # meters
         self.state['meter_loss'] = tnt.meter.AverageValueMeter()
         # time measure
@@ -188,10 +188,10 @@ class Engine(object):
             cudnn.benchmark = True
 
             model = torch.nn.DataParallel(model, device_ids=self.state['device_ids']).to(
-                "cuda" if self.state['use_gpu'] else "cpu", non_blocking=True)
+                self.device, non_blocking=True)
 
             criterion = criterion.to(
-                "cuda" if self.state['use_gpu'] else "cpu", non_blocking=True)
+                self.device, non_blocking=True)
 
         if self.state['evaluate']:
             self.validate(val_loader, model, criterion)
@@ -246,7 +246,7 @@ class Engine(object):
 
             if self.state['use_gpu']:
                 self.state['target'] = self.state['target'].to(
-                    "cuda" if self.state['use_gpu'] else "cpu", non_blocking=True)
+                    self.device, non_blocking=True)
 
             self.on_forward(True, model, criterion, data_loader, optimizer)
 
@@ -283,7 +283,7 @@ class Engine(object):
 
             if self.state['use_gpu']:
                 self.state['target'] = self.state['target'].to(
-                    "cuda" if self.state['use_gpu'] else "cpu", non_blocking=True)
+                    self.device, non_blocking=True)
 
             self.on_forward(False, model, criterion, data_loader)
 
