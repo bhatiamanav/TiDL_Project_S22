@@ -67,7 +67,7 @@ class GCNResnet(nn.Module):
         self.relu = nn.GELU() #nn.LeakyReLU(0.2)
         
         _adj = gen_A(num_classes, t, adj_file)
-        self.edgelist = self.adj_edgelist(_adj)
+        self.edgelist = Parameter( self.adj_edgelist(_adj))
         
         # image normalization
         self.image_normalization_mean = [0.485, 0.456, 0.406]
