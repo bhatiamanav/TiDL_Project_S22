@@ -2,7 +2,6 @@ import os
 import shutil
 import time
 
-from sympy import true
 import torch.backends.cudnn as cudnn
 import torch.nn.parallel
 import torch.optim
