@@ -81,7 +81,12 @@ class GCNResnet(nn.Module):
                 if adj[i , j ] > 0:
                     edgelist.append( [i , j ])
         return torch.tensor(edgelist , dtype=torch.long).T
-        
+    
+    def to(self, *args, **kwargs):
+        self = super().to(*args, **kwargs) 
+        self.edgelist = self.edgelist.to(*args, **kwargs) 
+        return self
+
     def forward(self, feature, inp):
         feature = self.features(feature)
         feature = self.pooling(feature)
