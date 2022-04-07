@@ -1,4 +1,3 @@
-from numpy import dtype
 import torchvision.models as models
 from torch.nn import Parameter
 from util import *
@@ -48,14 +47,7 @@ class GCNResnet(nn.Module):
     def __init__(self, model, num_classes, in_channel=300, t=0, adj_file=None):
         super(GCNResnet, self).__init__()
         self.features = nn.Sequential(
-            model.conv1,
-            model.bn1,
-            model.relu,
-            model.maxpool,
-            model.layer1,
-            model.layer2,
-            model.layer3,
-            model.layer4,
+            model.features
         )
         self.num_classes = num_classes
         self.pooling = nn.MaxPool2d(14, 14)
@@ -114,5 +106,5 @@ class GCNResnet(nn.Module):
 
 
 def gcn_resnet101(num_classes, t, pretrained=True, adj_file=None, in_channel=300):
-    model = models.resnet101(pretrained=pretrained)
+    model = models.densenet161 (pretrained=pretrained , progress=False)
     return GCNResnet(model, num_classes, t=t, adj_file=adj_file, in_channel=in_channel)
