@@ -80,7 +80,7 @@ class GCNResnet(nn.Module):
             for j in range (i+1 , m ):
                 if adj[i , j ] > 0:
                     edgelist.append( [i , j ])
-        return torch.tensor(edgelist , dtype=torch.long).T
+        return torch.tensor(edgelist , dtype=torch.long , requires_grad=False).T
     
     def to(self, *args, **kwargs):
         self = super().to(*args, **kwargs) 
