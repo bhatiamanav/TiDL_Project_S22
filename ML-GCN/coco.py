@@ -28,9 +28,10 @@ def download_coco2014(root, phase):
     cached_file = os.path.join(tmpdir, filename)
     if not os.path.exists(cached_file):
         print('Downloading: "{}" to {}\n'.format(urls[phase + '_img'], cached_file))
-        os.chdir(tmpdir)
+        # os.chdir(tmpdir)
         subprocess.call('wget ' + urls[phase + '_img'], shell=True)
-        os.chdir(root)
+        os.system("mv "+ filename + " "  + tmpdir)
+        # os.chdir(root)
     # extract file
     img_data = os.path.join(data, filename.split('.')[0])
     if not os.path.exists(img_data):
@@ -45,9 +46,10 @@ def download_coco2014(root, phase):
     cached_file = os.path.join(tmpdir, 'annotations_trainval2014.zip')
     if not os.path.exists(cached_file):
         print('Downloading: "{}" to {}\n'.format(urls['annotations'], cached_file))
-        os.chdir(tmpdir)
+        # os.chdir(tmpdir)
         subprocess.call('wget ' + urls['annotations'], shell=True)
-        os.chdir(root)
+        os.system("mv annotations_trainval2014.zip " + tmpdir)
+        # os.chdir(root)
     annotations_data = os.path.join(data, 'annotations')
     if not os.path.exists(annotations_data):
         os.system("mkdir " + annotations_data)
