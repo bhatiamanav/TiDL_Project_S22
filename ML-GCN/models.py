@@ -4,7 +4,7 @@ from torch.nn import Parameter
 from util import *
 import torch
 import torch.nn as nn
-from torch_geometric.nn.conv import gin_conv
+from torch_geometric.nn.conv import gin_conv , gatv2_conv
 
 
 
@@ -62,8 +62,8 @@ class GCNResnet(nn.Module):
 
         # self.gc1 = GraphConvolution(in_channel, 1024)
         # self.gc2 = GraphConvolution(1024, 2048)
-        self.gc1  = gin_conv.GINConv( nn= nn.Linear(in_channel , 1024) , eps=1e-4)
-        self.gc2 =  gin_conv.GINConv( nn= nn.Linear(1024, 2048) , eps=1e-4)
+        self.gc1  = gatv2_conv.GATv2Conv(in_channel , 1024)
+        self.gc2 =gatv2_conv.GATv2Conv( 1024 , 2048)
         self.relu = nn.GELU() #nn.LeakyReLU(0.2)
         
         _adj = gen_A(num_classes, t, adj_file)
