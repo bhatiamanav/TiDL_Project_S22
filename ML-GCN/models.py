@@ -100,7 +100,7 @@ class GCNResnet(nn.Module):
         x1 = self.relu(x1)
         x2 = self.gc2(x1, self.edgelist)
         x2 = self.relu(x2)
-        x = self.gc3( torch.cat((x1 , x2 ) ))
+        x = self.gc3( torch.cat((x1 , x2 ) ) ,self.edgelist )
         x = x.transpose(0, 1)
         x = torch.matmul(feature, x)
         return x
