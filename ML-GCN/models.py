@@ -60,9 +60,9 @@ class GCNResnet(nn.Module):
         self.num_classes = num_classes
         self.pooling = nn.MaxPool2d(14, 14)
 
-        self.gc1  = gin_conv.GINConv (in_channel , 1024)
-        self.gc2 =gin_conv.GINConv ( 1024 , 1024)
-        self.gc3 =gin_conv.GINConv ( 1024*2, 2*1024)
+        self.gc1  = gin_conv.GINConv( nn= nn.Linear(in_channel , 1024) , eps=1e-4)
+        self.gc2 = gin_conv.GINConv( nn= nn.Linear( 1024 , 1024) , eps=1e-4)
+        self.gc3 =gin_conv.GINConv( nn= nn.Linear( 1024*2 , 1024*2) , eps=1e-4)
 
         self.relu = nn.GELU() #nn.LeakyReLU(0.2)
         
