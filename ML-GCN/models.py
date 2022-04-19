@@ -4,8 +4,7 @@ from torch.nn import Parameter
 from util import *
 import torch
 import torch.nn as nn
-from torch_geometric.nn.conv import gin_conv , gatv2_conv
-
+from torch_geometric.nn.conv import gin_conv, gatv2_conv
 
 
 class GraphConvolution(nn.Module):
@@ -40,8 +39,8 @@ class GraphConvolution(nn.Module):
 
     def __repr__(self):
         return self.__class__.__name__ + ' (' \
-               + str(self.in_features) + ' -> ' \
-               + str(self.out_features) + ')'
+            + str(self.in_features) + ' -> ' \
+            + str(self.out_features) + ')'
 
 
 class GCNResnet(nn.Module):
@@ -60,31 +59,36 @@ class GCNResnet(nn.Module):
         self.num_classes = num_classes
         self.pooling = nn.MaxPool2d(14, 14)
 
-        self.gc1  = gin_conv.GINConv( nn= nn.Linear(in_channel , 1024) , eps=1e-4)
-        self.gc2 = gin_conv.GINConv( nn= nn.Linear( 1024 , 1024) , eps=1e-4)
-        self.gc3 =gin_conv.GINConv( nn= nn.Linear( 1024*2 , 1024*2) , eps=1e-4)
+        self.gc1 = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(in_channel, 2048),
+                                                     nn.GELU(),
+                                                     nn.Linear(2048, 1024)), eps=1e-4)
+        self.gc2 = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(1024, 2048),
+                                                     nn.GELU(),
+                                                     nn.Linear(2048, 1024)), eps=1e-4)
+        self.gc3 = nn.Linear(1024*2, 1024*2)
 
-        self.relu = nn.GELU() #nn.LeakyReLU(0.2)
-        
+        self.relu = nn.GELU()  # nn.LeakyReLU(0.2)
+
         _adj = gen_A(num_classes, t, adj_file)
         # self.edgelist = Parameter( self.adj_edgelist(_adj))
-        self.register_buffer("edgelist"  , self.adj_edgelist(_adj))
+        self.register_buffer("edgelist", self.adj_edgelist(_adj))
         # image normalization
         self.image_normalization_mean = [0.485, 0.456, 0.406]
         self.image_normalization_std = [0.229, 0.224, 0.225]
-    def adj_edgelist(self , adj ):
-        edgelist= []
+
+    def adj_edgelist(self, adj):
+        edgelist = []
         n = len(adj)
-        m= len(adj[0])
+        m = len(adj[0])
         for i in range(n):
-            for j in range (i+1 , m ):
-                if adj[i , j ] > 0:
-                    edgelist.append( [i , j ])
-        return torch.tensor(edgelist , dtype=torch.long , requires_grad=False).T
-    
+            for j in range(i+1, m):
+                if adj[i, j] > 0:
+                    edgelist.append([i, j])
+        return torch.tensor(edgelist, dtype=torch.long, requires_grad=False).T
+
     def to(self, *args, **kwargs):
-        self = super().to(*args, **kwargs) 
-        self.edgelist = self.edgelist.to(*args, **kwargs) 
+        self = super().to(*args, **kwargs)
+        self.edgelist = self.edgelist.to(*args, **kwargs)
         return self
 
     def forward(self, feature, inp):
@@ -92,26 +96,24 @@ class GCNResnet(nn.Module):
         feature = self.pooling(feature)
         feature = feature.view(feature.size(0), -1)
 
-
         inp = inp[0]
-        
-        # add skip connection 
+
+        # add skip connection
         x1 = self.gc1(inp, self.edgelist)
         x1 = self.relu(x1)
         x2 = self.gc2(x1, self.edgelist)
         x2 = self.relu(x2)
-        x = self.gc3( torch.cat((x1 , x2 ) , dim=1 ) ,self.edgelist )
+        x = self.gc3(torch.cat((x1, x2), dim=1))
         x = x.transpose(0, 1)
         x = torch.matmul(feature, x)
         return x
 
     def get_config_optim(self, lr, lrp):
         return [
-                {'params': self.features.parameters(), 'lr': lr * lrp},
-                {'params': self.gc1.parameters(), 'lr': lr},
-                {'params': self.gc2.parameters(), 'lr': lr},
-                ]
-
+            {'params': self.features.parameters(), 'lr': lr * lrp},
+            {'params': self.gc1.parameters(), 'lr': lr},
+            {'params': self.gc2.parameters(), 'lr': lr},
+        ]
 
 
 def gcn_resnet101(num_classes, t, pretrained=True, adj_file=None, in_channel=300):
