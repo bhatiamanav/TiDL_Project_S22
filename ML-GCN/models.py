@@ -68,10 +68,13 @@ class GCNResnet(nn.Module):
         self.gc3 = nn.Linear(1024*2, 1024*2)
 
         self.relu = nn.GELU()  # nn.LeakyReLU(0.2)
-
+        self.gcimg = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(14*14, 2048),
+                                                     nn.GELU(),
+                                                     nn.Linear(2048, 1)), eps=1e-4) 
         _adj = gen_A(num_classes, t, adj_file)
         # self.edgelist = Parameter( self.adj_edgelist(_adj))
         self.register_buffer("edgelist", self.adj_edgelist(_adj))
+        self.register_buffer("edge_list_gcn" , self.fg_edgelist())
         # image normalization
         self.image_normalization_mean = [0.485, 0.456, 0.406]
         self.image_normalization_std = [0.229, 0.224, 0.225]
@@ -85,6 +88,18 @@ class GCNResnet(nn.Module):
                 if adj[i, j] > 0:
                     edgelist.append([i, j])
         return torch.tensor(edgelist, dtype=torch.long, requires_grad=False).T
+    
+    def fg_edgelist(self):
+        edgelist = []
+        for i in range (13):
+            for j in range(13):
+                edgelist.append([i *14+ j  , (i+1)*14 + j ])
+                edgelist.append([i *14+ j  , (i)*14 + 1+j ])
+            edgelist.append([i*14 + 13 , (i+1)*14  + 13])
+        for i in range(13):
+            edgelist.append([13*14 + i , (13)*14  + i+1])
+        
+        return torch.tensor(edgelist, dtype=torch.long, requires_grad=False).T
 
     def to(self, *args, **kwargs):
         self = super().to(*args, **kwargs)
@@ -93,7 +108,8 @@ class GCNResnet(nn.Module):
 
     def forward(self, feature, inp):
         feature = self.features(feature)
-        feature = self.pooling(feature)
+        feature = feature.view(feature.size(0) ,feature.size(1) , -1)
+        feature = self.gcimg(feature , self.edge_list_gcn)
         feature = feature.view(feature.size(0), -1)
 
         inp = inp[0]
