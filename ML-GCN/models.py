@@ -59,18 +59,12 @@ class GCNResnet(nn.Module):
         self.num_classes = num_classes
         self.pooling = nn.MaxPool2d(14, 14)
 
-        self.gc1 = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(in_channel, 2048),
-                                                     nn.GELU(),
-                                                     nn.Linear(2048, 1024)), eps=1e-4)
-        self.gc2 = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(1024, 2048),
-                                                     nn.GELU(),
-                                                     nn.Linear(2048, 1024)), eps=1e-4)
-        self.gc3 = nn.Linear(1024*2, 1024*2)
+        self.gc1 = gatv2_conv.GATv2Conv(in_channel , 2048)
+        self.gc2 = gatv2_conv.GATv2Conv(2048,2048)
+        
 
         self.relu = nn.GELU()  # nn.LeakyReLU(0.2)
-        self.gcimg = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(14*14, 2048),
-                                                     nn.GELU(),
-                                                     nn.Linear(2048, 1)), eps=1e-4) 
+        self.gcimg = gatv2_conv.GATv2Conv(14*14, 2048)
         _adj = gen_A(num_classes, t, adj_file)
         # self.edgelist = Parameter( self.adj_edgelist(_adj))
         self.register_buffer("edgelist", self.adj_edgelist(_adj))
@@ -118,8 +112,8 @@ class GCNResnet(nn.Module):
         x1 = self.gc1(inp, self.edgelist)
         x1 = self.relu(x1)
         x2 = self.gc2(x1, self.edgelist)
-        x2 = self.relu(x2)
-        x = self.gc3(torch.cat((x1, x2), dim=1))
+        # x2 = self.relu(x2)
+        x = x2
         x = x.transpose(0, 1)
         x = torch.matmul(feature, x)
         return x
