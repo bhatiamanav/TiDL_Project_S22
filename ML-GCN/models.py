@@ -64,7 +64,9 @@ class GCNResnet(nn.Module):
         
 
         self.relu = nn.GELU()  # nn.LeakyReLU(0.2)
-        self.gcimg = gatv2_conv.GATv2Conv(14*14, 1)
+        self.gcimg = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(14*14, 2048),
+                                                     nn.GELU(),
+                                                     nn.Linear(2048, 1)), eps=1e-4) 
         _adj = gen_A(num_classes, t, adj_file)
         # self.edgelist = Parameter( self.adj_edgelist(_adj))
         self.register_buffer("edgelist", self.adj_edgelist(_adj))
