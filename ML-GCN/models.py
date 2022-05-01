@@ -61,7 +61,7 @@ class GCNResnet(nn.Module):
         self.pooling2 = nn.MaxPool1d(14*14)
         self.gc1 = gatv2_conv.GATv2Conv(in_channel , 2048)
         self.gc2 = gatv2_conv.GATv2Conv(2048,2048)
-        self.lin = nn.Linear(2048,2048)
+        self.lin = nn.Linear(2048*2,2048)
 
         self.relu = nn.GELU()  # nn.LeakyReLU(0.2)
         self.gcimg = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(2048, 1024),
