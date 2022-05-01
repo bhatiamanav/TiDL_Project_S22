@@ -42,6 +42,23 @@ class GraphConvolution(nn.Module):
             + str(self.in_features) + ' -> ' \
             + str(self.out_features) + ')'
 
+class GAT(torch.nn.Module):
+  """Graph Attention Network"""
+  def __init__(self, dim_in, dim_h, dim_out, heads=8):
+    super().__init__()
+    self.gat1 = gatv2_conv.GATv2Conv(dim_in, dim_h, heads=heads)
+    self.gat2 = gatv2_conv.GATv2Conv(dim_h*heads, dim_out, heads=1)
+    self.optimizer = torch.optim.Adam(self.parameters(),
+                                      lr=0.005,
+                                      weight_decay=5e-4)
+
+  def forward(self, x, edge_index):
+    h = F.dropout(x, p=0.6, training=self.training)
+    h = self.gat1(x, edge_index)
+    h = F.elu(h)
+    h = F.dropout(h, p=0.6, training=self.training)
+    h = self.gat2(h, edge_index)
+    return h
 
 class GCNResnet(nn.Module):
     def __init__(self, model, num_classes, in_channel=300, t=0, adj_file=None):
@@ -65,7 +82,7 @@ class GCNResnet(nn.Module):
         
 
         self.relu = nn.GELU()  # nn.LeakyReLU(0.2)
-        self.gcimg = gatv2_conv.GATv2Conv(2048 , 2048) 
+        self.gcimg =GAT(2048 ,  1024 , 2048) # gatv2_conv.GATv2Conv(2048 , 2048) 
         _adj = gen_A(num_classes, t, adj_file)
         # self.edgelist = Parameter( self.adj_edgelist(_adj))
         self.register_buffer("edgelist", self.adj_edgelist(_adj))
@@ -104,7 +121,9 @@ class GCNResnet(nn.Module):
     def forward(self, feature, inp):
         feature = self.features(feature)
         feature = feature.view(feature.size(0) *feature.size(1) , -1)
-        feature = self.gcimg(feature.T , self.edge_list_gcn).T
+        
+        feature = self.gcimg(feature.T , self.edge_list_gcn)[0].T
+    
         feature = self.pooling(feature)
         feature = feature.view(1, -1)
 
