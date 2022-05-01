@@ -122,7 +122,7 @@ class GCNResnet(nn.Module):
         feature = self.features(feature)
         feature = feature.view(feature.size(0) *feature.size(1) , -1)
         
-        feature = self.gcimg(feature.T , self.edge_list_gcn)[0].T
+        feature = self.gcimg(feature.T , self.edge_list_gcn).T
     
         feature = self.pooling(feature)
         feature = feature.view(1, -1)
