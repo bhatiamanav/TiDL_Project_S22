@@ -79,7 +79,7 @@ class GCNResnet(nn.Module):
 
         self.gc1 = gatv2_conv.GATv2Conv(in_channel , 2048)
         self.gc2 = gatv2_conv.GATv2Conv(2048,2048)
-        
+        self.lin = nn.Linear(2048,2048)
 
         self.relu = nn.GELU()  # nn.LeakyReLU(0.2)
         self.gcimg =GAT(2048 ,  1024 , 2048) # gatv2_conv.GATv2Conv(2048 , 2048) 
@@ -133,8 +133,8 @@ class GCNResnet(nn.Module):
         x1 = self.gc1(inp, self.edgelist)
         x1 = self.relu(x1)
         x2 = self.gc2(x1, self.edgelist)
-        # x2 = self.relu(x2)
-        x = x2
+        x2 = self.relu(x2)
+        x = self.lin(torch.cat((x1 , x2 ) , dim=1))
         x = x.transpose(0, 1)
         x = torch.matmul(feature, x)
         return x
