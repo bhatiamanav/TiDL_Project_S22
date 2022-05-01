@@ -58,15 +58,15 @@ class GCNResnet(nn.Module):
         )
         self.num_classes = num_classes
         self.pooling = nn.MaxPool2d(14, 14)
-
+        self.pooling2 = nn.MaxPool1d(14*14)
         self.gc1 = gatv2_conv.GATv2Conv(in_channel , 2048)
         self.gc2 = gatv2_conv.GATv2Conv(2048,2048)
         
 
         self.relu = nn.GELU()  # nn.LeakyReLU(0.2)
-        self.gcimg = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(14*14, 2048),
+        self.gcimg = gin_conv.GINConv(nn=nn.Sequential(nn.Linear(2048, 1024),
                                                      nn.GELU(),
-                                                     nn.Linear(2048, 1)), eps=1e-4) 
+                                                     nn.Linear(1024,2048)), eps=1e-4) 
         _adj = gen_A(num_classes, t, adj_file)
         # self.edgelist = Parameter( self.adj_edgelist(_adj))
         self.register_buffer("edgelist", self.adj_edgelist(_adj))
@@ -105,7 +105,10 @@ class GCNResnet(nn.Module):
     def forward(self, feature, inp):
         feature = self.features(feature)
         feature = feature.view(feature.size(0) ,feature.size(1) , -1)
+        feature = torch.permute(feature , (0 , 2 , 1 ))
         feature = self.gcimg(feature , self.edge_list_gcn)
+        feature = torch.permute(feature , (0 , 2 , 1 ))
+        feature = self.pooling2(feature )
         feature = feature.view(feature.size(0), -1)
 
         inp = inp[0]
