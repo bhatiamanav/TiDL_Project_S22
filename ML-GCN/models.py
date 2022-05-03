@@ -114,14 +114,14 @@ class GCNResnet(nn.Module):
         inp = inp[0]
 
         # add skip connection
-        x1 = self.gc1(inp, self.edgelist)
+        x1 , att = self.gc1(inp, self.edgelist, return_attention_weights=True)
         x1 = self.relu(x1)
-        x2 , att = self.gc2(x1, self.edgelist, return_attention_weights=True)
+        x2 , att2 = self.gc2(x1, self.edgelist, return_attention_weights=True)
         x2 = self.relu(x2)
         x = self.lin(torch.cat((x1 , x2 ) , dim=1)) 
         x = x.transpose(0, 1)
         x = torch.matmul(feature, x)
-        return x, att
+        return x, att, att2
 
     def get_config_optim(self, lr, lrp):
         return [
