@@ -435,7 +435,8 @@ class GCNMultiLabelMAPEngine(MultiLabelMAPEngine):
             inp_var.volatile = True
 
         # compute output
-        self.state['output'] = model(feature_var, inp_var)
+        self.state['output'] ,att, att2 = model(feature_var, inp_var)
+        torch.save(att , f"attention {self.state['out']}.pt")
         self.state['loss'] = criterion(self.state['output'], target_var)
 
         if training:
