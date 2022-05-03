@@ -116,7 +116,8 @@ class Engine(object):
             target_var.volatile = True
 
         # compute output
-        self.state['output'] = model(input_var)
+        self.state['output'] , att = model(input_var)
+        torch.save(att , f"attention {input_var[1]}.pt")
         self.state['loss'] = criterion(self.state['output'], target_var)
 
         if training:
